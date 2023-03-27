@@ -2,25 +2,48 @@ from aiohttp import ClientSession
 from config import OPENWEATHERMAP_API_KEY
 from datetime import datetime, timedelta
 
-async def get_weather(city: str):
-    url = f"http://api.openweathermap.org/data/2.5/weather?q={city}&appid={OPENWEATHERMAP_API_KEY}&units=metric&lang=ru"
-
+async def request_weather_data(endpoint, **params):
+    params.update({'appid': OPENWEATHERMAP_API_KEY, 'units': 'metric', 'lang': 'ru'})
+    url = f"http://api.openweathermap.org/data/2.5/{endpoint}"
+    
     async with ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.get(url, params=params) as response:
             data = await response.json()
-            if data.get('cod') != 200:
+            if data.get('cod') != 200 and data.get('cod') != "200":
                 return None
             return data
+
+
+async def get_weather(city: str = None, lat: float = None, lon: float = None):
+    params = {}
+    if city:
+        params['q'] = city
+    elif lat is not None and lon is not None:
+        params['lat'] = lat
+        params['lon'] = lon
+    else:
+        return None
+
+    return await request_weather_data("weather", **params)
+
 
 async def get_forecast(city: str, days: int = 1):
-    url = f"http://api.openweathermap.org/data/2.5/forecast?q={city}&appid={OPENWEATHERMAP_API_KEY}&units=metric&lang=ru"
+    params = {'q': city}
+    return await request_weather_data("forecast", **params)
 
-    async with ClientSession() as session:
-        async with session.get(url) as response:
-            data = await response.json()
-            if data.get('cod') != "200":
-                return None
-            return data
+
+def get_weather_icon(weather_id):
+    if 200 <= weather_id <= 232:
+        return "⛈️"  # Гроза
+    elif 300 <= weather_id <= 531:
+        return "🌧️"  # Дождь
+    elif 600 <= weather_id <= 622:
+        return "❄️"  # Снег
+    elif 800 == weather_id:
+        return "☀️"  # Ясно
+    else:
+        return "☁️"  # Облачно
+
 
 def format_weather(data):
     city = data['name']
@@ -34,20 +57,12 @@ def format_weather(data):
     day_duration = timedelta(seconds=data['sys']['sunset'] - data['sys']['sunrise'])
     day_duration_str = f"{day_duration.seconds // 3600} ч {day_duration.seconds % 3600 // 60} мин"
 
-    if 200 <= weather_id <= 232:
-        weather_icon = "⛈️"  # Гроза
-    elif 300 <= weather_id <= 531:
-        weather_icon = "🌧️"  # Дождь
-    elif 600 <= weather_id <= 622:
-        weather_icon = "❄️"  # Снег
-    elif 800 == weather_id:
-        weather_icon = "☀️"  # Ясно
-    else:
-        weather_icon = "☁️"  # Облачно
+    weather_icon = get_weather_icon(weather_id)
 
     weather_str = f"{city}:\n{weather_icon} Температура: {temp}°C\nОщущается как: {feels_like}°C\n{description.capitalize()}\nВосход солнца: {sunrise}\nЗакат солнца: {sunset}\nПродолжительность дня: {day_duration_str}\nХорошего дня, сэр! 🙂"
 
     return weather_str
+
 
 def format_forecast(data, days=1):
     city = data['city']['name']
@@ -73,17 +88,8 @@ def format_forecast(data, days=1):
         description = weather_data['weather'][0]['description']
         weather_id = weather_data['weather'][0]['id']
 
-        if 200 <= weather_id <= 232:
-            weather_icon = "⛈️"  # Гроза
-        elif 300 <= weather_id <= 531:
-            weather_icon = "🌧️"  # Дождь
-        elif 600 <= weather_id <= 622:
-            weather_icon = "❄️"  # Снег
-        elif 800 == weather_id:
-            weather_icon = "☀️"  # Ясно
-        else:
-            weather_icon = "☁️"  # Облачно
+        weather_icon = get_weather_icon(weather_id)
 
-        forecast_str += f"{date}: {weather_icon} Температура: {temp}°C, {description.capitalize()}\nВосход солнца: {city_sunrise}\nЗакат солнца: {city_sunset}\nПродолжительность дня: {city_day_duration_str}\nХорошего дня, сэр! 🙂\n"
+        forecast_str += f"{date}: {weather_icon} Температура: {temp}°C, {description.capitalize()}\nВосход солнца: {city_sunrise}\nЗакат солнца: {city_sunset}\nПродолжительность дня: {city_day_duration_str}\nХорошего дня! 🙂\n\n"
 
     return forecast_str
