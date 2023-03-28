@@ -17,6 +17,16 @@
 - `/week` - Погодные условия на неделю.
 - `/history` - История запросов пользователя.
 
+## Скриншоты
+
+<img src="images/start.jpg" alt="изображение" width="300">
+<img src="images/help.jpg" alt="изображение" width="300">
+<img src="images/today.jpg" alt="изображение" width="300">
+<img src="images/tomorrow.jpg" alt="изображение" width="300">
+<img src="images/week.jpg" alt="изображение" width="300">
+<img src="images/history.jpg" alt="изображение" width="300">
+<img src="images/location.jpg" alt="изображение" width="300">
+
 ## Как работать с ботом
 
 В файле config.py вписать `API_TOKEN = "Ваш токен для бота, полученный от @BotFather"`
