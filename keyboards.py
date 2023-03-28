@@ -1,5 +1,6 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+
 def forecast_buttons(city):
     keyboard = InlineKeyboardMarkup()
     keyboard.row(
@@ -13,5 +14,7 @@ def forecast_buttons(city):
 
     return keyboard
 
+
 def help_button():
-    return InlineKeyboardMarkup().add(InlineKeyboardButton("Помощь", callback_data="help"))
+    return InlineKeyboardMarkup().add(
+        InlineKeyboardButton("Помощь", callback_data="help"))

@@ -4,7 +4,8 @@ from datetime import datetime, timedelta
 
 
 async def request_weather_data(endpoint, **params):
-    params.update({'appid': OPENWEATHERMAP_API_KEY, 'units': 'metric', 'lang': 'ru'})
+    params.update({'appid': OPENWEATHERMAP_API_KEY,
+                   'units': 'metric', 'lang': 'ru'})
     url = f"http://api.openweathermap.org/data/2.5/{endpoint}"
 
     async with ClientSession() as session:
@@ -49,18 +50,25 @@ def get_weather_icon(weather_id):
 def format_weather(data):
     city = data['name']
     temp = round(data['main']['temp'])  # Округление температуры до целых
-    feels_like = round(data['main']['feels_like'])  # Округление ощущаемой температуры до целых
+    feels_like = round(data['main']['feels_like'])
     description = data['weather'][0]['description']
     weather_id = data['weather'][0]['id']
 
     sunrise = datetime.fromtimestamp(data['sys']['sunrise']).strftime('%H:%M')
     sunset = datetime.fromtimestamp(data['sys']['sunset']).strftime('%H:%M')
-    day_duration = timedelta(seconds=data['sys']['sunset'] - data['sys']['sunrise'])
-    day_duration_str = f"{day_duration.seconds // 3600} ч {day_duration.seconds % 3600 // 60} мин"
+    day_duration = timedelta(seconds=data['sys']['sunset'] -
+                             data['sys']['sunrise'])
+    day_duration_str = (f"{day_duration.seconds // 3600} ч "
+                        f"{day_duration.seconds % 3600 // 60} мин")
 
     weather_icon = get_weather_icon(weather_id)
 
-    weather_str = f"{city}:\n{weather_icon} Температура: {temp}°C\nОщущается как: {feels_like}°C\n{description.capitalize()}\nВосход солнца: {sunrise}\nЗакат солнца: {sunset}\nПродолжительность дня: {day_duration_str}\nХорошего дня! 🙂"
+    weather_str = (f"{city}:\n{weather_icon} Температура: {temp}°C\n"
+                   f"Ощущается как: {feels_like}"
+                   f"°C\n{description.capitalize()}\n"
+                   f"Восход солнца: {sunrise}\nЗакат солнца: {sunset}\n"
+                   f"Продолжительность дня: {day_duration_str}\n"
+                   f"Хорошего дня! 🙂")
 
     return weather_str
 
@@ -78,10 +86,14 @@ def format_forecast(data, days=1):
 
     forecast_str = f"Прогноз погоды в {city} на {period}:\n"
 
-    city_sunrise = datetime.fromtimestamp(data['city']['sunrise']).strftime('%H:%M')
-    city_sunset = datetime.fromtimestamp(data['city']['sunset']).strftime('%H:%M')
-    city_day_duration = timedelta(seconds=data['city']['sunset'] - data['city']['sunrise'])
-    city_day_duration_str = f"{city_day_duration.seconds // 3600} ч {city_day_duration.seconds % 3600 // 60} мин"
+    city_sunrise = datetime.fromtimestamp(
+        data['city']['sunrise']).strftime('%H:%M')
+    city_sunset = datetime.fromtimestamp(
+        data['city']['sunset']).strftime('%H:%M')
+    city_day_duration = timedelta(
+        seconds=data['city']['sunset'] - data['city']['sunrise'])
+    city_day_duration_str = f"{city_day_duration.seconds // 3600} ч "\
+                            f"{city_day_duration.seconds % 3600 // 60} мин"
 
     for i, weather_data in enumerate(weather_list[::8][:days]):
         date = weather_data['dt_txt'][:10]
@@ -91,6 +103,11 @@ def format_forecast(data, days=1):
 
         weather_icon = get_weather_icon(weather_id)
 
-        forecast_str += f"{date}: {weather_icon} Температура: {temp}°C, {description.capitalize()}\nВосход солнца: {city_sunrise}\nЗакат солнца: {city_sunset}\nПродолжительность дня: {city_day_duration_str}\nХорошего дня! 🙂\n\n"
+        forecast_str += (f"{date}: {weather_icon} Температура: {temp}°C, "
+                         f"{description.capitalize()}"
+                         f"\nВосход солнца: {city_sunrise}\n"
+                         f"Закат солнца: {city_sunset}\n"
+                         f"Продолжительность дня: {city_day_duration_str}\n"
+                         f"Хорошего дня! 🙂\n\n")
 
     return forecast_str
