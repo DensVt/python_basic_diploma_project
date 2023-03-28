@@ -2,10 +2,11 @@ from aiohttp import ClientSession
 from config import OPENWEATHERMAP_API_KEY
 from datetime import datetime, timedelta
 
+
 async def request_weather_data(endpoint, **params):
     params.update({'appid': OPENWEATHERMAP_API_KEY, 'units': 'metric', 'lang': 'ru'})
     url = f"http://api.openweathermap.org/data/2.5/{endpoint}"
-    
+
     async with ClientSession() as session:
         async with session.get(url, params=params) as response:
             data = await response.json()
@@ -59,7 +60,7 @@ def format_weather(data):
 
     weather_icon = get_weather_icon(weather_id)
 
-    weather_str = f"{city}:\n{weather_icon} Температура: {temp}°C\nОщущается как: {feels_like}°C\n{description.capitalize()}\nВосход солнца: {sunrise}\nЗакат солнца: {sunset}\nПродолжительность дня: {day_duration_str}\nХорошего дня, сэр! 🙂"
+    weather_str = f"{city}:\n{weather_icon} Температура: {temp}°C\nОщущается как: {feels_like}°C\n{description.capitalize()}\nВосход солнца: {sunrise}\nЗакат солнца: {sunset}\nПродолжительность дня: {day_duration_str}\nХорошего дня! 🙂"
 
     return weather_str
 

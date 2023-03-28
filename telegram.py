@@ -3,9 +3,11 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import ParseMode
 from datetime import datetime
+
 from keyboards import forecast_buttons, help_button
 from API import get_weather, get_forecast, format_weather, format_forecast
 from config import API_TOKEN
+
 
 logging.basicConfig(level=logging.INFO)
 
@@ -21,29 +23,37 @@ def add_to_history(user_id, city):
         user_history[user_id] = []
     user_history[user_id].append((city, timestamp))
 
-async def send_help_message(chat_id):
-    help_text = (
-        "Для того, чтобы получить информацию о погоде, введите название города или отправьте мне Вашу геолокацию.\n\n"
-        "Для отправки геолокации нажмите на скрепку, выберите Геопозиция, отправить свою геолокацию.\n\n"
-        "Я предоставлю вам прогноз погоды на сегодня, завтра и неделю вперед.\n\n"
-        "Вы также сможете увидеть историю своих запросов."
-    )
-    await bot.send_message(chat_id, help_text, reply_markup=help_button())
 
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 @dp.message_handler(commands=['start'])
 async def start_handler(message: types.Message):
     user_name = message.from_user.username or message.from_user.first_name
-    welcome_text = f"Привет, {user_name}! Я погодный бот.\n\nЯ могу предоставить информацию о погоде в разных городах и по Вашей геолокации, а также показать историю ваших запросов.\n\nЕсли вам нужна помощь, нажмите на кнопку ниже.\n"
+    welcome_text = f"Привет, {user_name}! Я погодный бот.\n\nЯ могу предоставить информацию о погоде в разных городах и по Вашей геолокации, а также показать историю ваших запросов.\n\nЕсли вам нужна помощь, нажмите на кнопку ниже.\n"  
     
-    help_button = types.InlineKeyboardButton("Помощь", callback_data="help")
-    help_markup = types.InlineKeyboardMarkup().add(help_button)
+    location_button = KeyboardButton("Отправить геолокацию", request_location=True)
+    help_button = KeyboardButton("Помощь")
+    
+    reply_markup = ReplyKeyboardMarkup(resize_keyboard=True).add(location_button).add(help_button)
+    await message.reply(welcome_text, reply_markup=reply_markup)
 
-    await message.reply(welcome_text, reply_markup=help_markup)
 
+async def send_help_message(chat_id):
+    help_text = (
+        "Для того, чтобы получить информацию о погоде, введите название города или отправьте мне Вашу геолокацию.\n\n"
+        "Для отправки геолокации нажмите на кнопку 'Отправить геолокацию' или используйте прикрепление и выберите 'Геопозиция', отправить свою геолокацию.\n\n"
+        "Я предоставлю вам прогноз погоды на сегодня, завтра и неделю вперед.\n\n"
+        "Вы также сможете увидеть историю своих запросов."
+    )
+    
+    location_button = KeyboardButton("Отправить геолокацию", request_location=True)
+    help_button = KeyboardButton("Помощь")
+    
+    reply_markup = ReplyKeyboardMarkup(resize_keyboard=True).add(location_button, help_button)
+    await bot.send_message(chat_id, help_text, reply_markup=reply_markup)
 
-@dp.message_handler(commands=['help'])
-async def cmd_help(message: types.Message):
+@dp.message_handler(lambda message: message.text == "Помощь")
+async def help_message_handler(message: types.Message):
     await send_help_message(message.chat.id)
 
 
@@ -57,8 +67,8 @@ async def process_location(message: types.Message):
         return
 
     city = weather_data['name']
-    add_to_history(message.from_user.id, city)
-    keyboard = forecast_buttons(city)
+    add_to_history(message.from_user.id, city)  
+    keyboard = forecast_buttons(city) 
     await bot.send_message(message.chat.id, "Выберите период прогноза:", reply_markup=keyboard)
 
 
@@ -77,8 +87,8 @@ async def process_city(message: types.Message):
         await message.reply(f"🚫 {city} не найден. Пожалуйста, проверьте название города и попробуйте еще раз.")
         return
 
-    add_to_history(message.from_user.id, city)
-    keyboard = forecast_buttons(city)
+    add_to_history(message.from_user.id, city)  
+    keyboard = forecast_buttons(city) 
     await bot.send_message(message.chat.id, "Выберите период прогноза:", reply_markup=keyboard)
 
 
@@ -93,7 +103,7 @@ async def process_history(callback_query: types.CallbackQuery):
             history_text += f"{timestamp}: {city}\n"
 
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.message.chat.id, history_text)
+    await bot.send_message(callback_query.message.chat.id, history_text)  
 
 
 @dp.callback_query_handler(lambda c: c.data.startswith(('today:', 'tomorrow:', 'week:')))
@@ -114,4 +124,4 @@ async def process_callback(callback_query: types.CallbackQuery):
 
     forecast_str = format_forecast(forecast_data, days)
     await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.message.chat.id, forecast_str)
+    await bot.send_message(callback_query.message.chat.id, forecast_str) 
